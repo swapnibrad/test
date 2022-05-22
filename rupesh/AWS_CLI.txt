@@ -1,0 +1,24 @@
+Aws installation process:
+
+1. curl -O https://bootstrap.pypa.io/get-pip.py
+2.  yum install python3 -y
+3. python3 get-pip.py
+4. export PATH=/usr/local/bin:$PATH
+5. source /etc/profile
+6. pip3 install awscli
+...........................................
+
+Syntax: aws [options] <command> <subcommand> [parameters]
+	- aws <command> <subcommand>
+	- aws <servicrs> <activity>
+list of users:
+- aws iam list-users
+create policy:
+- aws iam create-policy --policy-name S3_full_access --policy-document file://komal.json
+
+----------------------------------------------------------
+
+# amazon-linux-extras install epel -y
+# yum install stress -y
+# stress --cpu 90 --io 4 --vm 2 --vm-bytes 128M --timeout 10m
+# 
