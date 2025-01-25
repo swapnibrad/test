@@ -1,0 +1,113 @@
+
+-------vpc-------
+AWSTemplateFormatVersion: '2010-09-09'
+Description: CloudFormation Template for creating a VPC and updating a subnet on the default route table.
+Resources:
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 12.0.0.0/20
+      Tags:
+        - Key: Name
+          Value: test-VPC
+
+  # Create a Subnet
+  Subnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 12.0.0.0/22
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: Subnet1
+
+  # Get the default Route Table of the VPC
+  RouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+    Metadata:
+      Comment: Default route table for the VPC
+
+  # Associate the Subnet with the Default Route Table
+  RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref Subnet1
+      RouteTableId: !Ref RouteTable
+      
+  MyInternetGateway:
+    Type: 'AWS::EC2::InternetGateway'
+
+  MyVPCGatewayAttachment:
+    Type: 'AWS::EC2::VPCGatewayAttachment'
+    Properties:
+      VpcId: !Ref VPC
+      InternetGatewayId: !Ref MyInternetGateway
+      
+  Routeigw:
+    Type: 'AWS::EC2::Route'
+    Properties:
+      RouteTableId: !Ref RouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref MyInternetGateway
+
+Outputs:
+  VpcId:
+    Description: ID of the created VPC
+    Value: !Ref VPC
+
+  SubnetId:
+    Description: ID of the created Subnet
+    Value: !Ref Subnet1
+
+  RouteTableId:
+    Description: ID of the default Route Table
+    Value: !Ref RouteTable
+----------------------------------------------------------
+----EC2------
+Resources:
+  MySecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: "Allow SSH and HTTP traffic"
+      Tags: 
+        - Key: "Name"
+          Value: "demo"
+        - Key: "key2"
+          Value: "value2"
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 40
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+
+  MyInstance:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      ImageId: ami-0df8c184d5f6ae949
+      InstanceType: t2.micro
+      KeyName: delete_nv
+      IamInstanceProfile: complete_access_role
+      InstanceInitiatedShutdownBehavior: terminate
+      SecurityGroups: 
+        - !Ref MySecurityGroup 
+      UserData:
+        Fn::Base64: 
+          !Sub |
+            #!/bin/bash
+            sudo yum update -y
+            sudo yum install httpd -y
+            systemctl start httpd
+            systemctl enable httpd
+            echo "<html><body><h1>Hello from EC2! from Apponex</h1></body></html>" > /var/www/html/index.html
+      Tags: 
+          - Key: "Name"
+            Value: "demo"
+          - Key: "key2"
+            Value: "value2"        
